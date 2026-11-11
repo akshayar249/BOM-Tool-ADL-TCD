@@ -1,0 +1,33 @@
+# Version Control & IDE
+.git
+.gitignore
+.vscode
+.superpowers
+
+# Python Environments & Caches
+.venv
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+
+# Large Datasets, Archives, and Models
+OneDrive_*
+*.zip
+*.tar.gz
+my-local-gte-model/
+pipeline_state.sqlite3*
+pipeline_run.log
+test_long_orders/
+benchmarks/
+data/
+chroma_data/
+chroma_db/
+docs/
+
+# Frontend dependencies & build artifacts
+frontend/node_modules/
+frontend/.next/
+frontend/out/

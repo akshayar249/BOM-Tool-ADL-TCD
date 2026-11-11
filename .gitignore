@@ -1,0 +1,62 @@
+# Local secrets and environments
+.env
+.venv/
+.venv-lift/
+venv/
+ENV/
+env/
+*.local
+
+# Python generated files
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+
+# Local databases, vector stores, and model caches
+chroma_data/
+chroma_db/
+.cache/
+cache/
+my-local-gte-model/
+pipeline_state.sqlite3
+pipeline_state.sqlite3-*
+snapshots/
+*.tar.gz
+
+
+# Source documents may contain proprietary customer information. data/ is the
+# one deliberate exception -- tracked via Git LFS (see .gitattributes) so the
+# team can share processed documents across devices.
+*.pdf
+*.md
+!/data/
+!/data/**
+!/HANDOFF.md
+!/README.md
+!/DESIGN.md
+!/scripts/README.md
+!/docs/**
+
+OneDrive_6_7-7-2026/
+OneDrive_9_7-7-2026/
+OneDrive_6_7-7-2026.zip
+OneDrive_9_7-7-2026.zip
+
+# Run logs
+*.log
+
+# Local notes and credentials
+ace.txt
+tmux_commands.txt
+
+# Ad-hoc local experiments/benchmarks -- kept on disk (visible, browsable)
+# but deliberately never committed.
+/benchmarks/
+
+# Editor and OS files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

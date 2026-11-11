@@ -1,0 +1,117 @@
+services:
+  postgres:
+    image: postgres:18
+    container_name: info-sheets-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-info_sheets}
+      POSTGRES_USER: ${POSTGRES_USER:-info_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password123}
+    ports:
+      - "127.0.0.1:5433:5432"
+    volumes:
+      - info_sheets_pgdata:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build: 
+      context: .
+      dockerfile: Dockerfile.backend
+    container_name: info-sheets-backend
+    restart: unless-stopped
+    command: ["python", "-m", "uvicorn", "backend.main:app", "--host", "0.0.0.0", "--port", "8001", "--reload", "--reload-dir", "/app/backend", "--reload-dir", "/app/search"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "8001:8001"
+    environment:
+      - DATABASE_URL=postgresql+psycopg://${POSTGRES_USER:-info_user}:${POSTGRES_PASSWORD:-password123}@postgres:5432/${POSTGRES_DB:-info_sheets}
+      - CHROMA_PATH=/app/chroma_data
+      - EMBED_MODEL=Alibaba-NLP/gte-large-en-v1.5
+      - EMBED_DEVICE=cpu
+      - LIFT_DEVICE=auto
+      - HF_HOME=/root/.cache/huggingface
+      - PYTHONUNBUFFERED=1
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    volumes:
+      - ./chroma_data:/app/chroma_data:z
+      - ./data:/app/data:z
+      - ./backend:/app/backend:z
+      - ./search:/app/search:z
+      - ./scripts:/app/scripts:z
+      - hf_cache:/root/.cache/huggingface
+    develop:
+      watch:
+        - action: sync
+          path: ./backend
+          target: /app/backend
+          ignore:
+            - __pycache__/
+            - "*.pyc"
+        - action: sync
+          path: ./search
+          target: /app/search
+          ignore:
+            - __pycache__/
+            - "*.pyc"
+        - action: sync
+          path: ./scripts
+          target: /app/scripts
+          ignore:
+            - __pycache__/
+            - "*.pyc"
+        - action: rebuild
+          path: requirements.txt
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 180s
+
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+      target: dev
+    container_name: info-sheets-frontend
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_healthy
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_API_BASE_URL=http://localhost:8001
+      - WATCHPACK_POLLING=true
+    volumes:
+      - ./frontend:/app:z
+      - /app/node_modules
+      - /app/.next
+    develop:
+      watch:
+        - action: sync
+          path: ./frontend
+          target: /app
+          ignore:
+            - node_modules/
+            - .next/
+        - action: rebuild
+          path: ./frontend/package.json
+        - action: rebuild
+          path: ./frontend/package-lock.json
+
+volumes:
+  info_sheets_pgdata:
+  hf_cache:
